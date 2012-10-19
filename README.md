@@ -22,7 +22,7 @@ location attribute.
 
 Let's start a little Web-Server:
 
-```js
+``` js
 http.createServer(function (req, res) {
 	res.writeHead(200, {'Content-Type': 'text/plain'});
 
@@ -54,7 +54,7 @@ Ouch! Yes, the hash is not transmitted to the server. "But I use Backbone.js and
 Not a big problem, 99% of all modern browsers will accept a rewrite of the Location Header and keep the hash fragment. The 1% is the (iOS) Safari. 
 Check it out by starting a different version of our Web-Server:
 
-```js
+``` js
 var http = require('http');
 http.createServer(function (req, res) {
 	res.writeHead(302, {
@@ -104,7 +104,7 @@ Let's conquer it
 
 ##The PHP solution
 Using the `Mobile_Detect.php` Lib it is kind of easy:
-```php
+``` php
 <?php
 //print_r($_SERVER); exit();
 
@@ -147,7 +147,7 @@ Le Client-Side
 
 This is our very little JS call.
 
-```js
+``` js
 if (window.clientInformation.userAgent.search(/(iPhone)|(iPad)|(iPod)|(Mobile)/g) != -1) {
 	if (confirm('We do have a mobile site, do you want to use it?'))
 		window.location.href = window.location.href.replace(/www/g, "m")
