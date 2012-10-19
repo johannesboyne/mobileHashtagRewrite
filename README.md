@@ -18,7 +18,86 @@ all mobile browsers.
 
 You would love to use an HTTP Header Location Rewrite ;) for sure BUT be aware! 
 iOS's Safari forgets everything after the SERVER NAME if you simple rewrite the 
-kocation attribute.
+location attribute. 
+
+Let's start a little Web-Server:
+
+```js
+http.createServer(function (req, res) {
+	res.writeHead(200, {'Content-Type': 'text/plain'});
+
+	res.write('127.0.0.1:8000\n\n');
+	
+	res.write('Headers:\n');
+	res.write('--------\n');
+
+	res.write(JSON.stringify(req.url)+'\n');
+	res.write(JSON.stringify(req.headers));
+
+	res.end('Hello World\n');
+}).listen(8000, '127.0.0.1');
+console.log('Server running at http://127.0.0.1:8000/');
+```
+
+Calling the URL `http://127.0.0.1:8000/#hash/blupp` gives the following output:
+
+```
+127.0.0.1:8000
+
+Headers:
+--------
+"/"
+{"host":"127.0.0.1:8000","connection":"keep-alive","cache-control":"max-age=0","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.4 (KHTML, like Gecko) Chrome/22.0.1229.94 Safari/537.4","accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8","accept-encoding":"gzip,deflate,sdch","accept-language":"de-DE,de;q=0.8,en-US;q=0.6,en;q=0.4","accept-charset":"ISO-8859-1,utf-8;q=0.7,*;q=0.3"}Hello World
+```
+Ouch! Yes, the hash is not transmitted to the server. "But I use Backbone.js and I need #####" (some guy).
+
+Not a big problem, 99% of all modern browsers will accept a rewrite of the Location Header and keep the hash fragment. The 1% is the (iOS) Safari. 
+Check it out by starting a different version of our Web-Server:
+
+```js
+var http = require('http');
+http.createServer(function (req, res) {
+	res.writeHead(302, {
+		'Location': 'http://127.0.0.1:8000'
+	});
+
+	res.end();
+}).listen(9000, '127.0.0.1');
+console.log('Server running at http://127.0.0.1:9000/');
+
+http.createServer(function (req, res) {
+	res.writeHead(200, {'Content-Type': 'text/plain'});
+
+	res.write('127.0.0.1:8000\n\n');
+	
+	res.write('Headers:\n');
+	res.write('--------\n');
+
+	res.write(JSON.stringify(req.url)+'\n');
+	res.write(JSON.stringify(req.headers));
+
+	res.end('Hello World\n');
+}).listen(8000, '127.0.0.1');
+console.log('Server running at http://127.0.0.1:8000/');
+``` 
+
+Now call: `127.0.0.1:9000/#hash/blupp` (Chrome or Firefox will be best) and the output should be:
+
+```
+127.0.0.1:8000
+
+Headers:
+--------
+"/"
+{"host":"127.0.0.1:8000","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:16.0) Gecko/20100101 Firefox/16.0","accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8","accept-language":"de-de,de;q=0.8,en-us;q=0.5,en;q=0.3","accept-encoding":"gzip, deflate","connection":"keep-alive"}Hello World
+```
+Open your JS Console and call `window.location.href` it will output: `"http://127.0.0.1:8000/#hash/blupp"`. Voila the `#hash/blupp` is present.
+
+Now repeat it with Safari and look at the address bar `http://127.0.0.1:8000` **/#hash/blupp IS GONE!**.
+
+__**What is the solution?**__
+
+Everything except (iOS) Safari browser will be redirected by changing the HTTP Location Header. If it is a Safari we wont redirect on the server, therefor we have a very little JS call. 
 
 Let's conquer it
 ----------------
@@ -65,9 +144,12 @@ if($deviceType == 'tablet' || $deviceType == 'phone') {
 
 Le Client-Side
 --------------
+
+This is our very little JS call.
+
 ```js
 if (window.clientInformation.userAgent.search(/(iPhone)|(iPad)|(iPod)|(Mobile)/g) != -1) {
-	if (confirm('Wir haben auch eine mobile Seite, wollen Sie diese nutzen?'))
+	if (confirm('We do have a mobile site, do you want to use it?'))
 		window.location.href = window.location.href.replace(/www/g, "m")
 }
 ```
